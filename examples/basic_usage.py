@@ -21,11 +21,9 @@ os.environ["CATEGORIZATION_API_URL"] = os.getenv(
 from typing import Dict
 
 # Configure logging with ECS formatting first
-from etcd_dynamic_config.core.logging import setup_logging
+from etcd_dynamic_config import BaseEtcdClient, etcd_config, setup_logging
 
 setup_logging(level="INFO")
-
-from etcd_dynamic_config import BaseEtcdClient, etcd_config
 
 
 class DemoEtcdClient(BaseEtcdClient):

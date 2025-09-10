@@ -14,11 +14,9 @@ import os
 from typing import Dict
 
 # Configure logging with ECS formatting first
-from etcd_dynamic_config.core.logging import setup_logging
+from etcd_dynamic_config import BaseEtcdClient, EtcdConfig, setup_logging
 
 setup_logging(level="INFO")
-
-from etcd_dynamic_config import BaseEtcdClient, EtcdConfig
 
 # Set environment variables
 os.environ["USE_LOCAL_CONFIG"] = "true"

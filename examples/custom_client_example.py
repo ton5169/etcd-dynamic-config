@@ -11,11 +11,9 @@ import os
 from typing import Dict
 
 # Configure logging with ECS formatting first
-from etcd_dynamic_config.core.logging import setup_logging
+from etcd_dynamic_config import BaseEtcdClient, setup_logging
 
 setup_logging(level="INFO")
-
-from etcd_dynamic_config import BaseEtcdClient
 
 
 class MyAppEtcdClient(BaseEtcdClient):

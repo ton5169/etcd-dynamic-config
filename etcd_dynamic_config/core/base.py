@@ -40,7 +40,7 @@ class BaseEtcdClient(ABC):
             ca_cert_path: path to CA certificate
             use_local_config: whether to use local env vars instead of etcd
         """
-        self._logger = logging.getLogger("etcd_dynamic_config.base")
+        self._logger = logging.getLogger("app.base")
 
         # Configuration from parameters or environment
         self._endpoint = endpoint or os.getenv("EtcdSettings__HostName")

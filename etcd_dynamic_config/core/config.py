@@ -38,7 +38,7 @@ class EtcdConfig:
         # In-memory cache for configs
         self._cache: Dict[str, builtins.object] = {}
         self._lock = threading.RLock()
-        self._logger = logging.getLogger("etcd_dynamic_config.config")
+        self._logger = logging.getLogger("app.config")
         self._watch_cancel: Optional[Callable[[], None]] = None
         self._last_watcher_event_time = time.time()
         self._watcher_check_task: Optional[asyncio.Task] = None

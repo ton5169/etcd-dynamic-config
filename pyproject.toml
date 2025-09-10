@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "etcd-dynamic-config"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Python library for managing etcd-based configurations with caching and real-time updates"
 readme = "README.md"
 license = {text = "MIT"}
