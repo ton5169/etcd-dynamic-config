@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of etcd-config-provider
+- Initial release of etcd-dynamic-config
 - Core EtcdClient for etcd operations
 - EtcdConfig manager with caching and watching
 - Support for TLS and authentication

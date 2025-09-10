@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Basic usage example for etcd-config-provider.
+Basic usage example for etcd-dynamic-config.
 
 This example demonstrates:
 1. Basic configuration loading
@@ -51,7 +51,7 @@ class DemoEtcdClient(BaseEtcdClient):
 
 async def main():
     """Main application function."""
-    print("🚀 Starting etcd-config-provider example...")
+    print("🚀 Starting etcd-dynamic-config example...")
 
     # Check environment
     use_local = os.getenv("USE_LOCAL_CONFIG", "false").lower() == "true"

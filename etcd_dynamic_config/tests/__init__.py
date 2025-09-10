@@ -1,1 +1,1 @@
-# Tests for etcd-config-provider
+# Tests for etcd-dynamic-config

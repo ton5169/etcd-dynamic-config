@@ -1,4 +1,4 @@
-"""Basic tests for etcd-config-provider."""
+"""Basic tests for etcd-dynamic-config."""
 
 from unittest.mock import patch
 
