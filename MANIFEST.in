@@ -1,0 +1,14 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include pyproject.toml
+recursive-include etcd_dynamic_config *.py
+recursive-include docs *.md *.rst
+recursive-include examples *.py
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude *.pyo
+global-exclude .DS_Store
+prune dist
+prune build
+prune *.egg-info
