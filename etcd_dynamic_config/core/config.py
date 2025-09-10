@@ -14,18 +14,7 @@ except ImportError:
     # Fallback for when modules are imported directly
     from client import EtcdClient, etcd_client
 
-# Optional logging setup function
-try:
-    from .logging import setup_logging
-except ImportError:
-    # Fallback: try to import from app.core if available
-    try:
-        from app.core.logging import setup_logging
-    except ImportError:
-        # Create a no-op function if logging setup is not available
-        def setup_logging(level: str, **kwargs) -> None:
-            """Fallback logging setup - does nothing."""
-            pass
+from .logging import setup_logging
 
 
 class EtcdConfig:
@@ -182,7 +171,14 @@ class EtcdConfig:
                 self._watch_cancel = cancel
                 watcher_started = True
         except Exception:
-            self._logger.warning("failed_to_start_etcd_watcher", exc_info=True)
+            self._logger.warning(
+                "etcd_watcher_start_failed",
+                extra={
+                    "event": {"category": ["config"], "action": "watcher_start_failed"},
+                    "etcd": {"watcher_enabled": False},
+                },
+                exc_info=True,
+            )
 
         self._logger.info(
             "etcd_config_started",
@@ -264,7 +260,17 @@ class EtcdConfig:
             except asyncio.CancelledError:
                 break
             except Exception:
-                self._logger.warning("Watcher health check error", exc_info=True)
+                self._logger.warning(
+                    "watcher_health_check_error",
+                    extra={
+                        "event": {
+                            "category": ["config"],
+                            "action": "health_check_error",
+                        },
+                        "etcd": {"watcher_active": True},
+                    },
+                    exc_info=True,
+                )
 
     def _get_event_handler(self):
         """Get the event handler function for watcher."""
@@ -382,7 +388,17 @@ class EtcdConfig:
                             },
                         )
                     except Exception:
-                        self._logger.warning("log_level_apply_failed", exc_info=True)
+                        self._logger.warning(
+                            "log_level_apply_failed",
+                            extra={
+                                "event": {
+                                    "category": ["config"],
+                                    "action": "log_reconfigure_failed",
+                                },
+                                "logging": {"level": level, "sql_level": sql_level},
+                            },
+                            exc_info=True,
+                        )
             except Exception as e:
                 self._logger.warning(
                     "etcd_config_watch_callback_failed",

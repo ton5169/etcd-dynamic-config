@@ -32,6 +32,7 @@ classifiers = [
 ]
 dependencies = [
     "etcd3>=0.12.0",
+    "ecs-logging>=2.0.0",
 ]
 
 [project.optional-dependencies]

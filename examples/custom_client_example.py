@@ -7,14 +7,15 @@ with your own configuration keys and mappings.
 """
 
 import asyncio
-import logging
 import os
 from typing import Dict
 
-from etcd_dynamic_config import BaseEtcdClient
+# Configure logging with ECS formatting first
+from etcd_dynamic_config.core.logging import setup_logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+setup_logging(level="INFO")
+
+from etcd_dynamic_config import BaseEtcdClient
 
 
 class MyAppEtcdClient(BaseEtcdClient):

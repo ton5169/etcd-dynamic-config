@@ -40,9 +40,7 @@ class BaseEtcdClient(ABC):
             ca_cert_path: path to CA certificate
             use_local_config: whether to use local env vars instead of etcd
         """
-        self._logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self._logger = logging.getLogger("etcd_dynamic_config.base")
 
         # Configuration from parameters or environment
         self._endpoint = endpoint or os.getenv("EtcdSettings__HostName")
@@ -124,17 +122,35 @@ class BaseEtcdClient(ABC):
     def validate_connection_settings(self) -> bool:
         """Validate etcd connection settings."""
         if self._use_local_config:
-            self._logger.info("Using local environment variables for configuration")
+            self._logger.info(
+                "using_local_config",
+                extra={
+                    "event": {"category": ["config"], "action": "local_config_enabled"},
+                    "etcd": {"mode": "local_env"},
+                },
+            )
             return True
         if not self._endpoint:
-            self._logger.error("ETCD endpoints not configured")
+            self._logger.error(
+                "etcd_endpoints_not_configured",
+                extra={
+                    "event": {"category": ["config"], "action": "validation_failed"},
+                    "etcd": {"endpoint_configured": False},
+                },
+            )
             return False
         return True
 
     def connect(self) -> Optional[builtins.object]:
         """Establish connection to etcd server."""
         if etcd3 is None:
-            self._logger.error("etcd3 package is not installed")
+            self._logger.error(
+                "etcd3_package_not_installed",
+                extra={
+                    "event": {"category": ["config"], "action": "dependency_missing"},
+                    "etcd": {"package_available": False},
+                },
+            )
             return None
 
         if self._client is None:
@@ -192,16 +208,49 @@ class BaseEtcdClient(ABC):
                         )
 
                         self._logger.info(
-                            "ETCD client authenticated with gRPC credentials"
+                            "etcd_client_authenticated",
+                            extra={
+                                "event": {
+                                    "category": ["config"],
+                                    "action": "authenticated",
+                                },
+                                "etcd": {
+                                    "auth_method": "grpc",
+                                    "username": self._username,
+                                },
+                            },
                         )
                     except Exception as e:
                         # Fallback to HTTP-only auth
                         self._logger.debug(
-                            f"gRPC auth failed, falling back to HTTP: {e}",
+                            "grpc_auth_failed_fallback_to_http",
+                            extra={
+                                "event": {
+                                    "category": ["config"],
+                                    "action": "auth_fallback",
+                                },
+                                "etcd": {
+                                    "auth_method": "http",
+                                    "original_error": str(e),
+                                },
+                                "error": {"message": str(e), "type": type(e).__name__},
+                            },
                             exc_info=True,
                         )
                         self._client.auth(self._username, self._password)
-                        self._logger.debug("ETCD client authenticated (HTTP only)")
+                        self._logger.debug(
+                            "etcd_client_authenticated_http",
+                            extra={
+                                "event": {
+                                    "category": ["config"],
+                                    "action": "authenticated",
+                                },
+                                "etcd": {
+                                    "auth_method": "http",
+                                    "username": self._username,
+                                },
+                            },
+                        )
 
                 # Verify connection
                 version_info = self._client.version()
@@ -233,13 +282,25 @@ class BaseEtcdClient(ABC):
         """Start a background watcher for a given prefix."""
         # Implementation remains the same as before
         if etcd3 is None:
-            self._logger.error("etcd3 package is not installed")
+            self._logger.error(
+                "etcd3_package_not_installed",
+                extra={
+                    "event": {"category": ["config"], "action": "dependency_missing"},
+                    "etcd": {"package_available": False},
+                },
+            )
             return None
 
         client = self.connect()
 
         if client is None:
-            self._logger.error("Cannot start etcd watcher: client not connected")
+            self._logger.error(
+                "etcd_watcher_start_failed",
+                extra={
+                    "event": {"category": ["config"], "action": "watcher_start_failed"},
+                    "etcd": {"client_connected": False},
+                },
+            )
             return None
 
         # The watching implementation remains the same
@@ -364,7 +425,20 @@ class BaseEtcdClient(ABC):
                             range_end = prefix_bytes + b"\x00"
                 except Exception as manual_ex:
                     self._logger.warning(
-                        f"Both etcd3.utils and manual range_end failed: {e}, {manual_ex}"
+                        "etcd_watcher_range_end_failed",
+                        extra={
+                            "event": {
+                                "category": ["config"],
+                                "action": "watcher_setup_failed",
+                            },
+                            "etcd": {"prefix": prefix},
+                            "error": {
+                                "message": f"Both etcd3.utils and manual range_end failed: {e}, {manual_ex}",
+                                "utils_error": str(e),
+                                "manual_error": str(manual_ex),
+                            },
+                        },
+                        exc_info=True,
                     )
                     range_end = None
 
@@ -378,7 +452,11 @@ class BaseEtcdClient(ABC):
                 )
             except TypeError:
                 self._logger.warning(
-                    "StatefulWatcher doesn't support key/range_end, creating basic watcher"
+                    "etcd_watcher_fallback_to_basic",
+                    extra={
+                        "event": {"category": ["config"], "action": "watcher_fallback"},
+                        "etcd": {"watcher_type": "basic", "prefix": prefix},
+                    },
                 )
                 watcher = StatefulWatcher(
                     client,
@@ -408,7 +486,15 @@ class BaseEtcdClient(ABC):
                     on_event(key_str)
                 except Exception:
                     self._logger.warning(
-                        "Error handling etcd watch event (stateful)", exc_info=True
+                        "etcd_watch_event_error",
+                        extra={
+                            "event": {
+                                "category": ["config"],
+                                "action": "watch_event_error",
+                            },
+                            "etcd": {"key": key_str, "watcher_type": "stateful"},
+                        },
+                        exc_info=True,
                     )
 
             try:
@@ -421,7 +507,14 @@ class BaseEtcdClient(ABC):
                         watcher.callback = _handle_event
                     except (TypeError, AttributeError):
                         self._logger.error(
-                            "Could not register stateful watcher event handler"
+                            "etcd_watcher_registration_failed",
+                            extra={
+                                "event": {
+                                    "category": ["config"],
+                                    "action": "watcher_registration_failed",
+                                },
+                                "etcd": {"watcher_type": "stateful", "prefix": prefix},
+                            },
                         )
                         raise
 
@@ -461,7 +554,16 @@ class BaseEtcdClient(ABC):
         client = self.connect()
 
         if client is None:
-            self._logger.error("Cannot retrieve etcd values: client not connected")
+            self._logger.error(
+                "etcd_values_retrieval_failed",
+                extra={
+                    "event": {
+                        "category": ["config"],
+                        "action": "values_retrieval_failed",
+                    },
+                    "etcd": {"client_connected": False, "keys_requested": len(keys)},
+                },
+            )
             return {str(key): None for key in keys}
 
         for key in keys:
@@ -477,7 +579,14 @@ class BaseEtcdClient(ABC):
             except Exception as e:
                 if "invalid auth token" in str(e).lower():
                     self._logger.warning(
-                        f"Auth token expired for key {key}, attempting reconnect"
+                        "etcd_auth_token_expired",
+                        extra={
+                            "event": {
+                                "category": ["config"],
+                                "action": "auth_token_expired",
+                            },
+                            "etcd": {"key": key, "action": "reconnect_attempt"},
+                        },
                     )
                     try:
                         self._client = None
@@ -497,7 +606,15 @@ class BaseEtcdClient(ABC):
 
                 result[str(key)] = None
                 self._logger.warning(
-                    f"Failed to retrieve etcd key: {key}", exc_info=True
+                    "etcd_key_retrieval_failed",
+                    extra={
+                        "event": {
+                            "category": ["config"],
+                            "action": "key_retrieval_failed",
+                        },
+                        "etcd": {"key": key},
+                    },
+                    exc_info=True,
                 )
         return result
 
@@ -524,7 +641,13 @@ class BaseEtcdClient(ABC):
             defaults = {}
 
         if self._use_local_config:
-            self._logger.info("Loading configuration from environment variables")
+            self._logger.info(
+                "loading_config_from_env",
+                extra={
+                    "event": {"category": ["config"], "action": "loading_from_env"},
+                    "config": {"source": "environment_variables"},
+                },
+            )
             mapped = self._get_local_config_values()
         else:
             mapped = self.get_mapped_values(self._etcd_key_map)

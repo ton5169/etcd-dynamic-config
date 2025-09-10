@@ -9,7 +9,6 @@ This example demonstrates:
 """
 
 import asyncio
-import logging
 import os
 
 # Set environment variables BEFORE importing the package
@@ -21,12 +20,12 @@ os.environ["CATEGORIZATION_API_URL"] = os.getenv(
 
 from typing import Dict
 
-from etcd_dynamic_config import BaseEtcdClient, etcd_config
+# Configure logging with ECS formatting first
+from etcd_dynamic_config.core.logging import setup_logging
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+setup_logging(level="INFO")
+
+from etcd_dynamic_config import BaseEtcdClient, etcd_config
 
 
 class DemoEtcdClient(BaseEtcdClient):
