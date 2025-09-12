@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Простой пример расширения ControlUnitEtcdClient.
+Simple example of extending ControlUnitEtcdClient.
 
-Показывает минимальный код для добавления новых конфигов.
+Shows minimal code for adding new configs.
 """
 
 import os
@@ -11,13 +11,13 @@ from etcd_dynamic_config.core.control_unit import ControlUnitEtcdClient
 
 
 class SimpleExtendedClient(ControlUnitEtcdClient):
-    """Простое расширение с минимальным количеством новых конфигов."""
+    """Simple extension with minimal number of new configs."""
 
     def _build_etcd_key_map(self):
         base_map = super()._build_etcd_key_map()
         base = self.get_config_prefix()
 
-        # Добавляем всего 2 новых конфига
+        # Add only 2 new configs
         new_configs = {
             f"{base}/NewFeatureEnabled": "new_feature_enabled",
             f"{base}/NewFeatureUrl": "new_feature_url",
@@ -38,30 +38,30 @@ class SimpleExtendedClient(ControlUnitEtcdClient):
         return base_map
 
     def _coerce_config_value(self, internal_name, value):
-        # Специальная обработка для новых конфигов
+        # Special processing for new configs
         if internal_name == "new_feature_enabled":
             if isinstance(value, str):
                 return value.lower() in ("1", "true", "yes", "on")
             return bool(value)
 
-        # Для остальных - родительская логика
+        # For others - parent logic
         return super()._coerce_config_value(internal_name, value)
 
 
 if __name__ == "__main__":
-    print("🔧 Простой пример расширения:")
+    print("🔧 Simple extension example:")
 
-    # Создаем клиент
+    # Create client
     client = SimpleExtendedClient(use_local_config=True)
 
-    # Устанавливаем тестовые значения
+    # Set test values
     os.environ["NEW_FEATURE_ENABLED"] = "true"
     os.environ["NEW_FEATURE_URL"] = "https://new-feature.api.com"
 
-    # Получаем конфиг
+    # Get config
     config = client.get_config()
 
-    print("✅ Новые конфиги:")
+    print("✅ New configs:")
     print(
         f"  new_feature_enabled: {config['new_feature_enabled']} ({type(config['new_feature_enabled']).__name__})"
     )
@@ -69,5 +69,5 @@ if __name__ == "__main__":
         f"  new_feature_url: {config['new_feature_url']} ({type(config['new_feature_url']).__name__})"
     )
 
-    print("\n📊 Всего конфигураций:", len(config))
-    print("✨ Готово!")
+    print("\n📊 Total configurations:", len(config))
+    print("✨ Done!")
